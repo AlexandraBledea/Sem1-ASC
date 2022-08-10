@@ -1,0 +1,56 @@
+     1                                  bits 32
+     2                                  
+     3                                  global  start 
+     4                                  
+     5                                  extern  exit
+     6                                  import  exit msvcrt.dll
+     7                                  
+     8                                  ;calculate the expression: [d-2*(a-b)+b*c]/2
+     9                                  
+    10                                  ;for a=100,b=50,c=10,d=400 the result should be 400
+    11                                  segment  data use32 class=data 
+    12 00000000 64                          a db 100
+    13 00000001 32                          b db 50
+    14 00000002 0A                          c db 10
+    15 00000003 9001                        d dw 400
+    16                                  
+    17                                  
+    18                                  segment  code use32 class=code
+    19                                  start:
+    20 00000000 8A25[00000000]              mov AH, [a] ; AX=a --> AX=100
+    21                                      
+    22 00000006 2A25[01000000]              sub AH, [b] ; AX=AX-b --> AX=100-50 --> AX=50
+    23 0000000C 88E0                        mov AL, AH
+    24 0000000E B402                        mov AH, 2 ; AH=2
+    25 00000010 F6E4                        mul AH 
+    26 00000012 6689C1                      mov CX, AX
+    27                                      
+    28 00000015 8A1D[01000000]              mov BL, [b]
+    29 0000001B A0[02000000]                mov AL, [c]
+    30 00000020 F6E3                        mul BL
+    31 00000022 6689C2                      mov DX, AX
+    32 00000025 6689C8                      mov AX, CX
+    33                                      
+    34 00000028 66F7D8                      neg AX
+    35                                      
+    36 0000002B 6601D0                      add AX,DX
+    37                                      
+    38 0000002E 6652                        push DX
+    39 00000030 6650                        push AX
+    40 00000032 5A                          pop EDX
+    41                                      
+    42 00000033 A1[03000000]                mov EAX, [d]
+    43                                      
+    44 00000038 01D0                        add EAX, EDX
+    45 0000003A BB01000000                  mov EBX, 1
+    46 0000003F F7E3                        mul EBX
+    47 00000041 BB02000000                  mov EBX, 2
+    48 00000046 F7F3                        div EBX
+    49                                  
+    50                                        
+    51                                      ; EAX ← EDX:EAX / EBX
+    52                                      ; EDX:EAX ← EAX * EBX
+    53                                      
+    54                                        
+    55 00000048 6A00                        push   dword 0
+    56 0000004A FF15[00000000]              call   [exit]

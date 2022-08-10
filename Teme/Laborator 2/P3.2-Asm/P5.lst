@@ -1,0 +1,26 @@
+     1                                  bits 32
+     2                                  
+     3                                  global  start 
+     4                                  
+     5                                  extern  exit
+     6                                  import  exit msvcrt.dll
+     7                                  
+     8                                  ;calculate the expression: a*(b+c)+34
+     9                                  
+    10                                  ;for a=100,b=50,c=10 the result should be 400
+    11                                  segment  data use32 class=data 
+    12 00000000 0A                          a db 10
+    13 00000001 32                          b db 50
+    14 00000002 0A                          c db 10
+    15                                  
+    16                                  
+    17                                  segment  code use32 class=code
+    18                                  start:
+    19 00000000 A0[01000000]                mov AL, [b]
+    20 00000005 0205[02000000]              add AL, [c]
+    21 0000000B 8A25[00000000]              mov AH, [a]
+    22 00000011 F6E4                        mul AH
+    23 00000013 6683C022                    add AX, 34
+    24                                      
+    25 00000017 6A00                        push   dword 0
+    26 00000019 FF15[00000000]              call   [exit]

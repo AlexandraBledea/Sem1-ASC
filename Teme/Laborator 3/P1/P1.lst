@@ -1,0 +1,61 @@
+     1                                  bits 32
+     2                                  
+     3                                  global  start 
+     4                                  
+     5                                  extern  exit
+     6                                  import  exit msvcrt.dll
+     7                                  
+     8                                  ;(c-a-d)+(c-b)-a
+     9                                  
+    10                                  segment  data use32 class=data 
+    11 00000000 64                          a db 100
+    12 00000001 F401                        b dw 500
+    13 00000003 BC020000                    c dd 700
+    14 00000007 1E00000000000000            d dq 30
+    15                                  
+    16                                      ;1234 5678
+    17                                      
+    18                                      
+    19                                  segment  code use32 class=code
+    20                                  start:
+    21                                  
+    22 00000000 8B1D[03000000]              mov EBX, [c] ; EBX = c 
+    23 00000006 66A1[01000000]              mov AX, [b] ; AX = b
+    24 0000000C 66BA0000                    mov DX, 0 ; DX = 0
+    25                                      
+    26 00000010 6652                        push DX
+    27 00000012 6650                        push AX
+    28 00000014 58                          pop EAX ; EAX = b
+    29                                      
+    30 00000015 89C2                        mov EDX, EAX ; EDX = b
+    31                                      
+    32 00000017 29C3                        sub EBX, EAX ; EBX = c - b
+    33                                      
+    34 00000019 A0[00000000]                mov AL, [a] ; AL = a
+    35 0000001E B400                        mov AH, 0 ; AH = 0
+    36                                      
+    37 00000020 29C3                        sub EBX, EAX ; EBX = (c - b) - a
+    38                                      
+    39 00000022 01DA                        add EDX, EBX ; EDX = c - a
+    40                                      
+    41 00000024 89DE                        mov ESI, EBX
+    42                                      
+    43 00000026 89D0                        mov EAX, EDX ; EAX = c - a
+    44 00000028 BA00000000                  mov EDX, 0 ; EDX = 0
+    45                                      
+    46 0000002D 8B0D[07000000]              mov ECX, dword[d] ; ECX = low part of d
+    47 00000033 8B1D[0B000000]              mov EBX, dword[d+4] ; EBX = high part of d
+    48                                      ; EBX:ECX = d
+    49                                      
+    50 00000039 29C8                        sub EAX, ECX 
+    51 0000003B 19DA                        sbb EDX, EBX 
+    52                                      ; EDX:EAX = (c - a - d) --> EDX:EAX = EDX:EAX - EBX:ECX 
+    53                                      
+    54 0000003D 89F1                        mov ECX, ESI
+    55 0000003F BB00000000                  mov EBX, 0
+    56                                      
+    57 00000044 01C8                        add EAX, ECX
+    58 00000046 11DA                        adc EDX, EBX
+    59                                      
+    60 00000048 6A00                        push   dword 0
+    61 0000004A FF15[00000000]              call   [exit]

@@ -1,0 +1,59 @@
+     1                                  ;  programul calculeaza factorialul unui numar si afiseaza in consola rezultatul
+     2                                  ;  procedura factorial este definita in fisierul MMCfactorial.asm
+     3                                  bits  32
+     4                                  global  start
+     5                                  
+     6                                  extern  printf, exit, scanf
+     7                                  import  printf msvcrt.dll
+     8                                  import scanf msvcrt.dll
+     9                                  import  exit msvcrt.dll
+    10                                  
+    11                                  extern Expression
+    12                                  
+    13                                  
+    14                                  segment  data use32 public data
+    15 00000000 256400                      format_read db "%d", 0
+    16 00000003 54686520726573756C-     	format_print db  "The result of the expression is = %d", 0
+    16 0000000C 74206F662074686520-
+    16 00000015 65787072657373696F-
+    16 0000001E 6E206973203D202564-
+    16 00000027 00                 
+    17 00000028 00                          first_number db 0
+    18 00000029 00                          second_number db 0 
+    19 0000002A 00                          third_number db 0 
+    20 0000002B <res 00000004>              result resd 1
+    21                                  segment  code use32 public code
+    22                                  start:
+    23                                      
+    24                                      ;scanf(format_read, first_number)
+    25 00000000 68[28000000]                push dword first_number
+    26 00000005 68[00000000]                push dword format_read
+    27 0000000A FF15[00000000]              call [scanf]
+    28 00000010 83C408                      add ESP, 4*2
+    29                                      
+    30                                      ;scanf(format_read, second_number)
+    31 00000013 68[29000000]                push dword second_number
+    32 00000018 68[00000000]                push dword format_read
+    33 0000001D FF15[00000000]              call [scanf]
+    34 00000023 83C408                      add ESP, 4*2
+    35                                      
+    36                                      ;scanf(format_read, third_number)
+    37 00000026 68[2A000000]                push dword third_number
+    38 0000002B 68[00000000]                push dword format_read
+    39 00000030 FF15[00000000]              call [scanf]
+    40 00000036 83C408                      add ESP, 4*2
+    41                                      
+    42 00000039 FF35[2A000000]              push dword [third_number]
+    43 0000003F FF35[29000000]              push dword [second_number]
+    44 00000045 FF35[28000000]              push dword [first_number]
+    45                                     
+    46 0000004B E8(00000000)                call Expression
+    47                                      
+    48                                      ;printf(format_print, a+b-c)
+    49 00000050 53                          push dword EBX
+    50 00000051 68[03000000]                push dword format_print
+    51 00000056 FF15[00000000]              call [printf]
+    52 0000005C 83C408                      add ESP, 4*2
+    53                                      
+    54 0000005F 6A00                    	push 0
+    55 00000061 FF15[00000000]          	call [exit]

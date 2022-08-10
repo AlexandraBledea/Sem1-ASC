@@ -1,0 +1,52 @@
+     1                                  bits 32
+     2                                  global  start 
+     3                                  
+     4                                  
+     5                                  extern  exit
+     6                                  import  exit msvcrt.dll
+     7                                  
+     8                                  segment  data use32 class=data 
+     9                                  
+    10 00000000 072137132E                  s1 db 7, 33, 55, 19, 46
+    11                                      L1 equ $-s1
+    12 00000005 2115070D1B1337012E          s2 db 33, 21, 7, 13, 27, 19, 55, 1, 46
+    13                                      L2 equ $-s2
+    14 0000000E 00<rept>                    d times L2 db 0
+    15                                  
+    16                                  segment  code use32 class=code
+    17                                  start:
+    18                                      
+    19 00000000 B909000000                  mov ECX, L2
+    20 00000005 E331                        jecxz end_loop
+    21                                      for_every_element_in_s2:
+    22                                          ; the position for the current element is s2 + L2 - ECX
+    23 00000007 BA09000000                      mov EDX, L2
+    24 0000000C 29CA                            sub EDX, ECX ; EDX = L2 - ECX
+    25                                          
+    26 0000000E 51                              push ECX ; we save the current counter for the first loop
+    27                                          
+    28 0000000F B905000000                      mov ECX, L1 ; we put in ECX the length of the first series
+    29 00000014 E31F                                jecxz end_of_second_loop
+    30                                              for_every_element_in_s1:
+    31                                                  ;the position for the current element is s1 + L1 - ECX
+    32 00000016 BB05000000                              mov EBX, L1
+    33 0000001B 29CB                                    sub EBX, ECX ; EBX = L1 - ECX
+    34                                                  
+    35 0000001D 8A83[00000000]                          mov AL, [s1 + EBX]
+    36 00000023 3A82[05000000]                          cmp AL, [s2 + EDX] ; We check if the current element from s1 is equal with the current element from s2
+    37 00000029 7508                                    JNE next_element
+    38 0000002B FEC3                                        inc BL
+    39 0000002D 889A[0E000000]                              mov [d + EDX], BL 
+    40                                                      ;Because the value of L1 - ECX fits in one byte, it will be found in BL
+    41                                                      
+    42                                                  next_element:
+    43 00000033 E2E1                                loop for_every_element_in_s1
+    44                                              
+    45                                              end_of_second_loop:
+    46                                           
+    47 00000035 59                              pop ECX
+    48                                  
+    49 00000036 E2CF                        loop for_every_element_in_s2
+    50                                      end_loop:
+    51 00000038 6A00                        push   dword 0
+    52 0000003A FF15[00000000]              call   [exit]

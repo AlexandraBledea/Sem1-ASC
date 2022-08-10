@@ -1,0 +1,32 @@
+     1                                  bits 32
+     2                                  
+     3                                  global  start 
+     4                                  
+     5                                  extern  exit
+     6                                  import  exit msvcrt.dll
+     7                                  
+     8                                  ;calculate the expression: (c+b+b)-(c+a+d)
+     9                                  ;for a=100,b=200,c=50,d=125 the result should be 175
+    10                                  
+    11                                  segment  data use32 class=data 
+    12 00000000 6400                        a DW 100
+    13 00000002 C800                        b DW 200
+    14 00000004 3200                        c DW 50
+    15 00000006 7D00                        d DW 125
+    16                                  
+    17                                  segment  code use32 class=code
+    18                                  start:
+    19 00000000 668B0D[04000000]            mov CX, [c] ;CX=50
+    20                                      
+    21 00000007 66030D[02000000]            add CX,[b] ;CX=CX+b --> CX=50+200 --> CX=250
+    22 0000000E 66030D[02000000]            add CX,[b] ;CX=CX+b --> CX=250+200 --> CX=450
+    23                                      
+    24 00000015 668B1D[04000000]            mov BX, [c] ;BX=50
+    25                                      
+    26 0000001C 66031D[00000000]            add BX, [a] ;BX=BX+a --> BX=50+100 --> BX=150
+    27 00000023 66031D[06000000]            add BX, [d] ;BX=BX+d --> BX=150+125 --> BX=275
+    28                                      
+    29 0000002A 6629D9                      sub CX, BX ;CX=CX-BX --> CX=450-275 -->CX=175
+    30                                      
+    31 0000002D 6A00                        push   dword 0
+    32 0000002F FF15[00000000]              call   [exit]

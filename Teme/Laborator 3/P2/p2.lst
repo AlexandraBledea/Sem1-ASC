@@ -1,0 +1,93 @@
+     1                                  bits 32
+     2                                  
+     3                                  global  start 
+     4                                  
+     5                                  
+     6                                  extern  exit
+     7                                  import  exit msvcrt.dll
+     8                                  
+     9                                  ; (c+b+b)-(c+a+d)
+    10                                  ; the result for this set of data should be 200
+    11                                  segment  data use32 class=data 
+    12 00000000 28                          a db 40
+    13 00000001 9600                        b dw 150
+    14 00000003 64000000                    c dd 100
+    15 00000007 3C00000000000000            d dq 60
+    16                                  
+    17                                      
+    18                                  segment  code use32 class=code
+    19                                  start:
+    20                                  
+    21 00000000 66A1[01000000]              mov AX, [b]
+    22 00000006 6699                        cwd
+    23                                      ; DX:AX = b
+    24                                      
+    25                                      
+    26 00000008 668B0D[03000000]            mov CX, word[c]
+    27 0000000F 668B1D[05000000]            mov BX, word[c+2]
+    28                                      ; BX:CX = c
+    29                                      
+    30                                      
+    31 00000016 6601C1                      add CX, AX
+    32 00000019 6611D3                      adc BX, DX
+    33                                      ; BX:CX = c + b
+    34                                      
+    35                                      
+    36 0000001C 6601C8                      add AX, CX
+    37 0000001F 6611DA                      adc DX, BX
+    38                                      ; BX:CX = c + b + b
+    39                                      
+    40                                      
+    41 00000022 6652                        push DX
+    42 00000024 6650                        push AX
+    43 00000026 5B                          pop EBX
+    44                                      ; EBX = c + b + b
+    45                                      
+    46 00000027 89DF                        mov EDI, EBX
+    47                                      ; EBX = c + b + b
+    48                                      
+    49                                      
+    50 00000029 A0[00000000]                mov AL, [a]
+    51 0000002E 6698                        cbw
+    52                                      ; AX = a
+    53 00000030 6699                        cwd
+    54                                      ; DX:AX = a
+    55                                      
+    56                                      
+    57 00000032 668B0D[03000000]            mov CX, word[c]
+    58 00000039 668B1D[05000000]            mov BX, word[c+2]
+    59                                      ; BX:CX = c
+    60                                      
+    61                                      
+    62 00000040 6601C8                      add AX, CX
+    63 00000043 6611DA                      adc DX, BX
+    64                                      ; DX:AX = c + a
+    65                                      
+    66 00000046 6652                        push DX
+    67 00000048 6650                        push AX
+    68 0000004A 58                          pop EAX
+    69                                      ; EAX = c + a
+    70                                      
+    71 0000004B 99                          cdq
+    72                                      ; EDX:EAX = c + a
+    73                                      
+    74 0000004C 8B0D[07000000]              mov ECX, dword[d]
+    75 00000052 8B1D[0B000000]              mov EBX, dword[d+4]
+    76                                      ; EBX:ECX = d
+    77                                      
+    78 00000058 01C1                        add ECX, EAX
+    79 0000005A 11D3                        adc EBX, EDX
+    80                                      ; EBX:ECX = c + a + d
+    81                                      
+    82 0000005C 89F8                        mov EAX, EDI ; EAX = c + b + b
+    83 0000005E 99                          cdq
+    84                                      ; EDX:EAX = c + b + b
+    85                                      
+    86 0000005F 29C8                        sub EAX, ECX
+    87 00000061 19DA                        sbb EDX, EBX
+    88                                      ; EDX:EAX = (c + b + b) - (c + a + d)
+    89                                  
+    90                                  
+    91                                  
+    92 00000063 6A00                        push   dword 0
+    93 00000065 FF15[00000000]              call   [exit]

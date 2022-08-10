@@ -1,0 +1,15 @@
+     1                                  bits 32
+     2                                  
+     3                                  global Expression
+     4                                  
+     5                                  Expression:
+     6                                      
+     7 00000000 8B0424                      mov EAX, [ESP]
+     8 00000003 8B5C2401                    mov EBX, [ESP+1]
+     9 00000007 8B4C2402                    mov ECX, [ESP+2]
+    10                                      
+    11 0000000B 01D8                        add EAX, EBX
+    12 0000000D 29C8                        sub EAX, ECX
+    13                                      
+    14 0000000F C20C00                      ret 4*3
+    15                                      

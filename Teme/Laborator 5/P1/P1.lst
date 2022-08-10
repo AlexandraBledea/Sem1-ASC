@@ -1,0 +1,46 @@
+     1                                  bits 32
+     2                                  global  start 
+     3                                  
+     4                                  
+     5                                  extern  exit
+     6                                  import  exit msvcrt.dll
+     7                                  
+     8                                  ;Se da un sir de caractere S. Sa se construiasca sirul D care sa contina toate literele mici din sirul S.
+     9                                  ;Exemplu:
+    10                                  ;S: 'a', 'A', 'b', 'B', '2', '%', 'x'
+    11                                  ;D: 'a', 'b', 'x'
+    12                                  
+    13                                  
+    14                                  segment  data use32 class=data 
+    15 00000000 614162423225786443          s db 'a', 'A', 'b', 'B', '2', '%', 'x', 'd', 'C'
+    16                                      l equ $-s ; the length of the initial string is determined like that
+    17 00000009 00<rept>                    d times l db 0 ; reserving a space of size l for the destination string d and initialize it
+    18                                  
+    19                                  segment  code use32 class=code
+    20                                  start:
+    21                                  
+    22 00000000 B909000000                  mov ECX, l
+    23 00000005 BE00000000                  mov ESI, 0
+    24 0000000A BF00000000                  mov EDI, 0
+    25 0000000F B361                        mov BL, 'a'
+    26 00000011 B27A                        mov DL, 'z'
+    27 00000013 E318                        jecxz Outoftheloop
+    28                                      my_loop:
+    29 00000015 8A86[00000000]                  mov AL, [s+ESI] ; We put in AL the current element from s starting from left to right
+    30 0000001B 46                              inc ESI ; After that we increment the value of ESI, preparing it to be used for the next element from s
+    31 0000001C 38D8                            cmp AL,BL 
+    32 0000001E 720B                            jnae out_of_first_if ; We check if the current element from s is greater then 'a'
+    33                                          next_if:
+    34 00000020 38D0                                cmp AL, DL
+    35 00000022 7707                                jnbe out_ot_the_second_if ; We check if the current element from is smaller then 'z'
+    36                                              next_if2:
+    37 00000024 8887[09000000]                          mov [d+EDI], AL ; If both conditions are checked it means the curent element from s is a lower case character
+    38 0000002A 47                                      inc EDI ; We increment the value of EDI, preparing it to be used for the next lower case character if it exists in the string s
+    39                                          out_ot_the_second_if:       
+    40                                          out_of_first_if: 
+    41 0000002B E2E8                        loop my_loop
+    42                                      Outoftheloop:
+    43                                  
+    44                                  
+    45 0000002D 6A00                        push   dword 0
+    46 0000002F FF15[00000000]              call   [exit]
