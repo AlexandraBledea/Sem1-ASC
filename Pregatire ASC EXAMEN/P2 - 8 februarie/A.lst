@@ -1,0 +1,99 @@
+     1                                  bits 32
+     2                                  
+     3                                  global start
+     4                                  
+     5                                  ;A string of doublewords is given ( defined in module a.asm). Build the string of byte ranks
+     6                                  ;that have the maximum value from each doubleword (considering them unsigned) by calling a 
+     7                                  ;procedure from module b.asm. This procedure should also compute the sum of these bytes.
+     8                                  ;Next, in the main module (a.asm) print this string of bytes on the screen (unsigned) and also print
+     9                                  ;the sum of these bytes(signed).
+    10                                  
+    11                                  ;Example: If the string of doublewords is:
+    12                                  ;sir dd 1234A678h, 12345678h, 1AC3B47Dh, FEDC9876h
+    13                                  ;the bytes of max value are respectively A6h, 78h, C3h, FEh,
+    14                                  ;the corresponding string of bytes ranks being "3421",
+    15                                  ;and the sum of these bytes being -33.
+    16                                  
+    17                                  extern B
+    18                                  extern exit, printf
+    19                                  
+    20                                  import printf msvcrt.dll
+    21                                  import exit msvcrt.dll
+    22                                  
+    23                                  segment data use32 class=data
+    24                                  
+    25 00000000 78A63412785634127D-         given_string dd 1234A678h, 12345678h, 1AC3B47Dh, 0FEDC9876h
+    25 00000009 B4C31A7698DCFE     
+    26                                      len equ ($-given_string)/4
+    27 00000010 00<rept>                    destination_string times len db 0
+    28 00000014 00000000                    destination dd 0
+    29 00000018 00000000                    sum_of_bytes dd 0
+    30 0000001C 25782000                    format db "%x ", 0
+    31 00000020 256400                      format2 db "%d", 0
+    32 00000023 200A0D00                    format3 db " ", 10, 13, 0
+    33 00000027 00000000                    copy dd 0
+    34 0000002B 05000000                    result dd 5
+    35 0000002F 00000000                    counter dd 0
+    36                                      
+    37                                  
+    38                                  segment code use32 class=code
+    39                                  start:
+    40                                  
+    41 00000000 6A04                        push dword len
+    42 00000002 68[10000000]                push dword destination_string
+    43 00000007 68[00000000]                push dword given_string
+    44 0000000C E8(00000000)                call B
+    45 00000011 83C40C                      add ESP, 4*3
+    46                                      
+    47 00000014 A3[18000000]                mov [sum_of_bytes], EAX
+    48                                      
+    49 00000019 B900000000                  mov ECX, 0
+    50                                      for_every_byte:
+    51 0000001E 8A81[10000000]                  mov AL, [destination_string + ECX]
+    52 00000024 51                              push ECX
+    53 00000025 8A1D[2B000000]                  mov BL, [result]
+    54 0000002B 28C3                            sub BL, AL
+    55 0000002D 881D[27000000]                  mov [copy], BL
+    56 00000033 8B0D[27000000]                  mov ECX, [copy]
+    57 00000039 BE[00000000]                    mov ESI, given_string
+    58                                          for_:
+    59 0000003E AC                                  lodsb
+    60 0000003F FF05[2F000000]                      inc dword[counter]
+    61 00000045 E2F7                                loop for_
+    62 00000047 A2[14000000]                    mov [destination], AL
+    63 0000004C 833D[2F000000]04                cmp dword[counter], 4
+    64 00000053 7502                            jne label1
+    65 00000055 740D                            je label2
+    66                                          label1:
+    67 00000057 B904000000                      mov ECX, 4
+    68 0000005C 2B0D[2F000000]                  sub ECX, dword[counter]
+    69 00000062 F3AC                            rep lodsb
+    70                                          label2:
+    71 00000064 FF35[14000000]                  push dword [destination]
+    72 0000006A 68[1C000000]                    push dword format
+    73 0000006F FF15[00000000]                  call [printf]
+    74 00000075 83C408                          add ESP, 4*2
+    75 00000078 C705[2B000000]0500-             mov dword[result], 5
+    75 00000080 0000               
+    76 00000082 C705[2F000000]0000-             mov dword[counter], 0
+    76 0000008A 0000               
+    77 0000008C 59                              pop ECX
+    78 0000008D 41                              inc ECX
+    79 0000008E 83F904                          cmp ECX, len
+    80 00000091 758B                            jne for_every_byte
+    81                                      
+    82 00000093 68[23000000]                push dword format3
+    83 00000098 FF15[00000000]              call [printf]
+    84 0000009E 83C404                      add ESP, 4*1
+    85                                      
+    86 000000A1 A0[18000000]                mov AL, byte[sum_of_bytes]
+    87 000000A6 6698                        cbw
+    88 000000A8 98                          cwde
+    89                                      
+    90 000000A9 50                          push dword EAX
+    91 000000AA 68[20000000]                push dword format2
+    92 000000AF FF15[00000000]              call [printf]
+    93 000000B5 83C408                      add ESP, 4*2
+    94                                      
+    95 000000B8 6A00                        push dword 0
+    96 000000BA FF15[00000000]              call [exit]

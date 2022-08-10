@@ -1,0 +1,56 @@
+     1                                  bits 32
+     2                                  
+     3                                  global C
+     4                                  
+     5                                  segment  data use32 public code
+     6                                  
+     7                                  
+     8                                  C:
+     9                                  
+    10                                  ;ESP - return address
+    11                                  ;ESP + 4 - actual_length
+    12                                  ;ESP + 8 - input_text
+    13                                  ;ESP + 12 - final
+    14                                  
+    15 00000000 8B4C2404                    mov ECX, [ESP + 4]
+    16 00000004 8B742408                    mov ESI, [ESP + 8]
+    17 00000008 8B7C240C                    mov EDI, [ESP + 12]
+    18 0000000C BB00000000                  mov EBX, 0
+    19 00000011 FC                          cld
+    20                                      again:
+    21 00000012 AC                              lodsb
+    22 00000013 3C59                            cmp AL, 59h
+    23 00000015 741E                            je is_a_letter
+    24 00000017 3C5A                            cmp AL, 5Ah
+    25 00000019 741A                            je is_a_letter
+    26 0000001B 3C79                            cmp AL, 79h
+    27 0000001D 7416                            je is_a_letter
+    28 0000001F 3C7A                            cmp AL, 7Ah
+    29 00000021 7412                            je is_a_letter
+    30 00000023 3C41                            cmp AL, 41h
+    31 00000025 721A                            jb not_a_letter
+    32 00000027 3C58                            cmp AL, 58h
+    33 00000029 760A                            jbe is_a_letter
+    34 0000002B 3C61                            cmp AL, 61h
+    35 0000002D 7212                            jb not_a_letter
+    36 0000002F 3C78                            cmp AL, 78h
+    37 00000031 7602                            jbe is_a_letter
+    38 00000033 EB0C                            jmp not_a_letter
+    39                                          
+    40                                          is_a_letter:
+    41 00000035 6683C002                            add AX, 2h
+    42 00000039 AA                                  stosb
+    43 0000003A 83F900                              cmp ECX, 0
+    44 0000003D 75D3                                jne again
+    45 0000003F EB08                                jmp final
+    46                                          
+    47                                          not_a_letter:
+    48 00000041 AA                                  stosb
+    49 00000042 83F900                              cmp ECX, 0
+    50 00000045 75CB                                jne again
+    51 00000047 EB00                                jmp final
+    52                                      
+    53                                      final:
+    54 00000049 C3                              ret
+    55                                          
+    56                                         

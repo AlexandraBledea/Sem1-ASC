@@ -1,0 +1,66 @@
+     1                                  bits 32
+     2                                  
+     3                                  global start
+     4                                  extern printf, exit
+     5                                  import printf msvcrt.dll
+     6                                  import exit msvcrt.dll
+     7                                  
+     8                                  
+     9                                  segment data use32  class=data
+    10                                      
+    11 00000000 10                          sir db 10h
+    12 00000001 00000000                    counter dd 0
+    13 00000005 00000000                    copy_of_digit dd 0
+    14 00000009 00000000                    integer_form dd 0
+    15 0000000D 00000000                    copy_of_counter dd 0
+    16 00000011 257500                      format db "%u", 0
+    17                                      
+    18                                  segment code use32 public code
+    19                                  
+    20                                  start:
+    21 00000000 B800000000                  mov EAX, 0
+    22 00000005 BB[00000000]                mov EBX, sir
+    23 0000000A B000                        mov AL, 0
+    24 0000000C D7                          xlat
+    25 0000000D B903000000                  mov ECX, 3 ; the number of characters
+    26 00000012 890D[01000000]              mov [counter], ECX
+    27                                      
+    28 00000018 BE[00000000]                mov ESI, sir
+    29                                      ;add ESI, ECX
+    30                                      ;sub ESI, 1
+    31 0000001D 83F901                      cmp ECX, 1
+    32 00000020 FC                          cld
+    33 00000021 B800000000                  mov EAX, 0
+    34 00000026 7402                        je go_further
+    35 00000028 750B                        jne for_every_character
+    36                                      go_further:
+    37 0000002A AC                              lodsb
+    38 0000002B 2C30                            sub AL, '0'
+    39 0000002D 0005[09000000]                  add [integer_form], AL
+    40 00000033 EB19                            jmp end_
+    41                                      
+    42                                      for_every_character:
+    43 00000035 50                                  push EAX
+    44 00000036 AC                                  lodsb
+    45 00000037 2C30                                sub AL, '0'
+    46 00000039 A2[05000000]                        mov [copy_of_digit], AL
+    47 0000003E 58                                  pop EAX
+    48 0000003F 0305[05000000]                      add EAX, [copy_of_digit]
+    49 00000045 BB0A000000                          mov EBX, 10
+    50 0000004A F7E3                                mul EBX
+    51                                              ;add dword[integer_form], EAX
+    52 0000004C E2E7                                loop for_every_character
+    53                                      
+    54                                      end_:   
+    55                                      ;mov EAX, 0
+    56                                      ;mov EAX, [integer_form]
+    57 0000004E BB0A000000                  mov EBX, 10
+    58 00000053 F7F3                        div EBX
+    59                                      
+    60 00000055 50                          push dword EAX
+    61 00000056 68[11000000]                push dword format
+    62 0000005B FF15[00000000]              call [printf]
+    63                                      
+    64                                      
+    65 00000061 6A00                        push dword 0
+    66 00000063 FF15[00000000]              call [exit]

@@ -1,0 +1,86 @@
+     1                                  bits 32
+     2                                  
+     3                                  global start
+     4                                  
+     5                                  extern exit, printf, scanf, fread, fclose, fopen
+     6                                  
+     7                                  import exit msvcrt.dll
+     8                                  import printf msvcrt.dll
+     9                                  import scanf msvcrt.dll
+    10                                  import fread msvcrt.dll
+    11                                  import fclose msvcrt.dll
+    12                                  import fopen msvcrt.dll
+    13                                  
+    14                                  ;Two strings of words are given. Concatenate the string of low bytes of the words 
+    15                                  ;from the first string to the string of high bytes of the words from the second string.
+    16                                  ;The resulted string of bytes should be sorted in ascending order in the signed interpretation.  
+    17                                  
+    18                                  segment data use32 class=data
+    19 00000000 4523A50068039039            first_string dw 2345h, 0A5h, 368h, 3990h 
+    20                                      len1 equ ($-first_string)/2
+    21 00000008 040055260A00                second_string dw 4h, 2655h, 10  
+    22                                      len2 equ ($-second_string)/2
+    23                                      len_tot equ (len1 + len2)
+    24 0000000E 00<rept>                    destination times len_tot db 0
+    25 00000015 25782000                    format db "%x ", 0
+    26 00000019 00000000                    number dd 0
+    27                                      
+    28                                  segment code use32 class=code
+    29                                      start:
+    30                                      
+    31 00000000 B904000000                  mov ECX, len1
+    32 00000005 BE[00000000]                mov ESI, first_string
+    33 0000000A BF[0E000000]                mov EDI, destination
+    34 0000000F FC                          cld
+    35                                      for_every_number_in_first_string:
+    36 00000010 AC                              lodsb ; <- we load in AL the low byte from the word
+    37 00000011 AA                              stosb ; <- we store in EDI the low byte from the word
+    38 00000012 AC                              lodsb
+    39 00000013 E2FB                        loop for_every_number_in_first_string
+    40                                      
+    41 00000015 B903000000                  mov ECX, len2
+    42 0000001A BE[08000000]                mov ESI, second_string
+    43 0000001F FC                          cld
+    44                                      for_every_number_in_second_string:
+    45 00000020 AC                              lodsb
+    46 00000021 AC                              lodsb
+    47 00000022 AA                              stosb
+    48 00000023 E2FB                        loop for_every_number_in_second_string
+    49                                      
+    50                                      ;Sortare:
+    51                                      
+    52                                      while_:
+    53 00000025 B300                        mov BL, 0
+    54 00000027 B906000000                  mov ECX, len_tot - 1
+    55 0000002C BE[0E000000]                mov ESI, destination
+    56 00000031 FC                          cld
+    57                                      keep_sorting:
+    58 00000032 AC                              lodsb
+    59 00000033 3A06                            cmp AL, [ESI]
+    60 00000035 7E09                            jle next_number
+    61 00000037 8A16                            mov DL, [ESI]
+    62 00000039 8856FF                          mov [ESI - 1], DL
+    63 0000003C 8806                            mov [ESI], AL
+    64 0000003E B301                            mov BL, 1
+    65                                          
+    66                                          next_number:
+    67 00000040 E2F0                            loop keep_sorting
+    68 00000042 80FB01                          cmp BL, 1
+    69 00000045 74DE                            je while_
+    70                                          
+    71 00000047 B907000000                  mov ECX, len_tot
+    72 0000004C BE[0E000000]                mov ESI, destination
+    73 00000051 B800000000                  mov EAX, 0
+    74                                      for_every_number:
+    75 00000056 AC                              lodsb
+    76 00000057 A3[19000000]                    mov dword[number], EAX
+    77 0000005C 60                              pushad
+    78 0000005D FF35[19000000]                  push dword [number]
+    79 00000063 68[15000000]                    push dword format
+    80 00000068 FF15[00000000]                  call [printf]
+    81 0000006E 83C408                          add ESP, 4*2
+    82 00000071 61                              popad
+    83 00000072 E2E2                            loop for_every_number
+    84                                          
+    85 00000074 6A00                        push dword 0
+    86 00000076 FF15[00000000]              call [exit]

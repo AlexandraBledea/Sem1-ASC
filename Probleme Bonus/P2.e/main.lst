@@ -1,0 +1,83 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  global start
+     4                                  
+     5                                  extern exit, fopen, fread, fclose, scanf, fprintf, fscanf            
+     6                                  import exit msvcrt.dll    
+     7                                                            
+     8                                  import fread msvcrt.dll
+     9                                  import fclose msvcrt.dll
+    10                                  import scanf msvcrt.dll
+    11                                  import fprintf msvcrt.dll
+    12                                  import fopen msvcrt.dll
+    13                                  import fscanf msvcrt.dll
+    14                                  
+    15                                  ;Se citeste un text din fisier si un character de la tastatura.
+    16                                  ;e)      Calculati numarul de cuvinte din fisier.
+    17                                  
+    18                                  segment data use32 class=data
+    19                                      
+    20 00000000 00000000                    counter dd 0
+    21 00000004 00000000                    actual_length dd 0
+    22 00000008 696E7075742E747874-         file_name db "input.txt", 0
+    22 00000011 00                 
+    23 00000012 7200                        access_mode db "r", 0    
+    24 00000014 FFFFFFFF                    file_descriptor dd -1
+    25                                      len equ 100
+    26 00000018 00<rept>                    text times len db 0
+    27                                      
+    28                                  segment code use32 class=code    
+    29                                      start:
+    30                                  
+    31                                          ;fopen(file_name, access_mode)
+    32 00000000 68[12000000]                    push dword access_mode
+    33 00000005 68[08000000]                    push dword file_name
+    34 0000000A FF15[00000000]                  call [fopen]
+    35 00000010 83C408                          add ESP, 4*2
+    36                                          
+    37 00000013 83F800                          cmp EAX, 0
+    38 00000016 745B                            je cleanup
+    39                                          
+    40 00000018 A3[14000000]                    mov [file_descriptor], EAX
+    41                                          
+    42                                          read:
+    43                                              ; EAX = fscanf(text, 1, len, file_descriptor)
+    44 0000001D FF35[14000000]                      push dword [file_descriptor]
+    45 00000023 6A64                                push dword len
+    46 00000025 6A01                                push dword 1
+    47 00000027 68[18000000]                        push dword text
+    48 0000002C FF15[00000000]                      call [fread]
+    49 00000032 83C410                              add ESP, 4*4
+    50                                              
+    51 00000035 83F800                              cmp EAX, 0
+    52 00000038 7423                                je end_read
+    53                                              
+    54 0000003A 89C3                                mov EBX, EAX
+    55 0000003C A3[04000000]                        mov dword[actual_length], EAX
+    56                                  
+    57 00000041 8B0D[04000000]                      mov ECX, dword[actual_length]
+    58 00000047 BE[18000000]                        mov ESI, text
+    59 0000004C FC                                  cld
+    60                                              
+    61                                              for_every_character:
+    62 0000004D AC                                      lodsb
+    63 0000004E 3C20                                    cmp AL, 020h
+    64 00000050 7507                                    jne label1
+    65 00000052 8305[00000000]01                            add dword[counter], 1
+    66                                              label1:
+    67 00000059 E2F2                                loop for_every_character
+    68 0000005B EBC0                                jmp read
+    69                                              
+    70                                          end_read:                    
+    71 0000005D 8305[00000000]01                add dword[counter], 1
+    72                                          
+    73                                          ;fclose(file_descriptor)
+    74 00000064 FF35[14000000]                  push dword [file_descriptor]
+    75 0000006A FF15[00000000]                  call [fclose]
+    76 00000070 83C404                          add ESP, 4*1
+    77                                          
+    78                                          
+    79                                          cleanup:
+    80 00000073 6A00                            push    dword 0
+    81 00000075 FF15[00000000]                  call    [exit]
+    82                                          

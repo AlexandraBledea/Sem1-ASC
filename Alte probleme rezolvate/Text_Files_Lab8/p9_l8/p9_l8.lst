@@ -1,0 +1,119 @@
+     1                                  bits 32
+     2                                  
+     3                                  global start
+     4                                  
+     5                                  extern exit, printf, scanf, fread, fclose, fopen
+     6                                  
+     7                                  import exit msvcrt.dll
+     8                                  import printf msvcrt.dll
+     9                                  import scanf msvcrt.dll
+    10                                  import fread msvcrt.dll
+    11                                  import fclose msvcrt.dll
+    12                                  import fopen msvcrt.dll
+    13                                  
+    14                                  segment data use32 class=data
+    15 00000000 FF                          file_descriptor db -1
+    16 00000001 696E7075742E747874-         file_name db "input.txt", 0
+    16 0000000A 00                 
+    17 0000000B 7200                        access_mode db "r", 0
+    18                                      len equ 1
+    19 0000000D 0000<rept>                  spec_char times (len+1) dw 0
+    20 00000011 00000000<rept>              freq_list times 300 dd 0
+    21 000004C1 00000000                    freq_character dd 0
+    22 000004C5 00000000                    character_with_max_freq dd 0
+    23 000004C5 <rept>                      special_characters_list times 300 dd
+    23          ******************       warning: no operand for data declaration
+    24 000004C9 00000000                    freq_length dd 0
+    25 000004CD 546865206D6F737420-         message db "The most used special character is: %c with an appearance of %d.", 0
+    25 000004D6 757365642073706563-
+    25 000004DF 69616C206368617261-
+    25 000004E8 637465722069733A20-
+    25 000004F1 256320776974682061-
+    25 000004FA 6E2061707065617261-
+    25 00000503 6E6365206F66202564-
+    25 0000050C 2E00               
+    26                                  
+    27                                  segment code use32 class=code
+    28                                      start:
+    29                                      
+    30                                      ;fopen(file_name, access_mode)
+    31 00000000 68[0B000000]                push dword access_mode
+    32 00000005 68[01000000]                push dword file_name
+    33 0000000A FF15[00000000]              call [fopen]
+    34 00000010 83C408                      add ESP, 4*2
+    35                                      
+    36 00000013 83F800                      cmp EAX, 0
+    37 00000016 0F84AF000000                je final
+    38                                      
+    39 0000001C A3[00000000]                mov [file_descriptor], EAX
+    40                                  
+    41                                      
+    42                                      keep_reading:
+    43                                          ;fread(spec_char, 1, len, file_descriptor)
+    44 00000021 FF35[00000000]                  push dword [file_descriptor]
+    45 00000027 6A01                            push dword len
+    46 00000029 6A01                            push dword 1
+    47 0000002B 68[0D000000]                    push dword spec_char
+    48 00000030 FF15[00000000]                  call [fread]
+    49 00000036 83C410                          add ESP, 4*4
+    50                                          
+    51 00000039 83F800                          cmp EAX, 0
+    52 0000003C 743B                            je stop_reading
+    53                                          
+    54 0000003E 833D[0D000000]61                cmp dword[spec_char], 'a'
+    55 00000045 7702                            ja check_next
+    56 00000047 720B                            jb go_further
+    57                                          check_next:
+    58 00000049 833D[0D000000]7A                    cmp dword[spec_char], 'z'
+    59 00000050 7225                                jb not_special_character
+    60 00000052 7716                                ja special_character
+    61                                          go_further:
+    62 00000054 833D[0D000000]5A                    cmp dword[spec_char], 'Z'
+    63 0000005B 770D                                ja special_character
+    64 0000005D 7200                                jb continue
+    65                                          continue:
+    66 0000005F 833D[0D000000]41                cmp dword[spec_char], 'A'
+    67 00000066 770F                            ja not_special_character
+    68 00000068 7200                            jb special_character
+    69                                          
+    70                                          special_character:
+    71 0000006A 8B35[0D000000]                      mov ESI, [spec_char]
+    72 00000070 FF04B5[11000000]                    inc dword[freq_list + ESI*4]
+    73                                      not_special_character:
+    74 00000077 EBA8                            jmp keep_reading
+    75                                      
+    76                                      stop_reading:
+    77                                      ;fclose(file_descriptor)
+    78 00000079 FF35[00000000]              push dword [file_descriptor]
+    79 0000007F FF15[00000000]              call [fclose]
+    80 00000085 83C404                      add ESP, 4*1
+    81                                      
+    82 00000088 BE21000000                  mov ESI, '!'
+    83 0000008D B97F000000                  mov ECX, 127
+    84                                  
+    85                                      parse_the_frequency:
+    86 00000092 8B04B5[11000000]                mov EAX, [freq_list + ESI*4]
+    87 00000099 3B05[C1040000]                  cmp EAX, [freq_character]
+    88 0000009F 7702                            ja modify
+    89                                          
+    90 000000A1 EB0B                            jmp dont_modify
+    91                                          
+    92                                          modify:
+    93 000000A3 A3[C1040000]                        mov [freq_character], EAX
+    94 000000A8 8935[C5040000]                      mov [character_with_max_freq], ESI
+    95                                              
+    96                                         dont_modify:
+    97 000000AE 46                             inc ESI
+    98 000000AF E2E1                        loop parse_the_frequency
+    99                                      
+   100                                      ;printf(message, letter_with_max_freq, freq_letter)
+   101 000000B1 FF35[C1040000]              push dword [freq_character]
+   102 000000B7 FF35[C5040000]              push dword [character_with_max_freq]
+   103 000000BD 68[CD040000]                push dword message
+   104 000000C2 FF15[00000000]              call [printf]
+   105 000000C8 83C40C                      add ESP, 4*3
+   106                                     
+   107                                          
+   108                                      final:
+   109 000000CB 6A00                        push dword 0
+   110 000000CD FF15[00000000]              call [exit]

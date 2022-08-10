@@ -1,0 +1,115 @@
+     1                                  bits 32
+     2                                  
+     3                                  global start
+     4                                  
+     5                                  extern exit, printf, scanf
+     6                                  extern A
+     7                                  ;extern B
+     8                                  
+     9                                  import scanf msvcrt.dll
+    10                                  import exit msvcrt.dll
+    11                                  import printf msvcrt.dll
+    12                                  ;"0.0.10.1,256.11.11.11,192.168.10.2,11.2000.1.0"
+    13                                  segment data use32 class=data
+    14                                      
+    15 00000000 257500                      format db "%u", 0
+    16                                      len_string equ 1001
+    17 00000003 00<rept>                    string times len_string db 0
+    18 000003EC 257300                      format_read db "%s", 0
+    19 000003EF 00000000                    len_characters dd 0
+    20 000003F3 00<rept>                    ip_string times len_string db 0
+    21 000007DC 00000000                    counter dd 0
+    22 000007E0 00<rept>                    complete_ip times len_string db 0
+    23 00000BC9 00                          copy_of_character db 0
+    24 00000BCA 256300                      char_format db "%c", 0
+    25 00000BCD 00000000                    integer dd 0
+    26                                      
+    27                                  segment code use32 class=code
+    28                                      start:
+    29                                      
+    30                                      ; We read the string
+    31 00000000 68[03000000]                push dword string
+    32 00000005 68[EC030000]                push dword format_read
+    33 0000000A FF15[00000000]              call [scanf]
+    34 00000010 83C408                      add ESP, 4*2
+    35                                      
+    36 00000013 A3[EF030000]                mov dword[len_characters], EAX
+    37                                      
+    38 00000018 8B0D[EF030000]              mov ECX, dword[len_characters]
+    39 0000001E BE[03000000]                mov ESI, string
+    40 00000023 BF[F3030000]                mov EDI, ip_string
+    41 00000028 FC                          cld
+    42 00000029 BB00000000                  mov EBX, 0
+    43                                      for_every_character:
+    44                                          go_further:
+    45 0000002E AC                              lodsb
+    46 0000002F 3C2E                            cmp AL, '.'
+    47 00000031 7411                            je procedure_a
+    48 00000033 3C2C                            cmp AL, ','
+    49 00000035 740D                            je procedure_a
+    50 00000037 3C00                            cmp AL, 0
+    51 00000039 7409                            je procedure_a
+    52 0000003B AA                              stosb
+    53 0000003C FF05[DC070000]                  inc dword[counter]
+    54 00000042 EBEA                            jmp go_further
+    55                                  
+    56                                          procedure_a:
+    57 00000044 51                                  push ECX
+    58 00000045 53                                  push EBX
+    59 00000046 56                                  push ESI
+    60 00000047 57                                  push EDI
+    61                                              
+    62 00000048 A2[C90B0000]                        mov [copy_of_character], AL
+    63 0000004D 68[F3030000]                        push dword ip_string
+    64 00000052 FF35[DC070000]                      push dword [counter]
+    65 00000058 E8(00000000)                        call A
+    66 0000005D 83C408                              add ESP, 4*2
+    67                                          
+    68 00000060 FC                              cld
+    69 00000061 A3[CD0B0000]                    mov [integer], EAX
+    70 00000066 FF35[CD0B0000]                  push dword [integer]
+    71 0000006C 68[00000000]                    push dword format
+    72 00000071 FF15[00000000]                  call [printf]
+    73 00000077 83C408                          add ESP, 4*2
+    74                                          
+    75 0000007A BB00000000                      mov EBX, 0
+    76 0000007F 8B0D[DC070000]                  mov ECX, dword[counter]
+    77                                          reinitialize_ip_string:
+    78 00000085 C683[F3030000]00                    mov byte[ip_string + EBX], 0
+    79 0000008C 43                                  inc EBX
+    80 0000008D E2F6                                loop reinitialize_ip_string
+    81                                          
+    82 0000008F 5F                              pop EDI
+    83 00000090 5E                              pop ESI
+    84 00000091 5B                              pop EBX
+    85 00000092 59                              pop ECX
+    86                                          
+    87 00000093 89049D[E0070000]                mov [complete_ip + EBX*4], EAX
+    88 0000009A 43                              inc EBX
+    89 0000009B C705[DC070000]0000-             mov dword[counter], 0
+    89 000000A3 0000               
+    90 000000A5 803D[C90B0000]2C                cmp byte[copy_of_character], ','
+    91 000000AC 7580                            jne for_every_character
+    92                                          
+    93                                              ;push dword complete_ip
+    94                                              ;call B
+    95                                              ; In eax i will have the value 1 if the ip have the right format and 0 if not
+    96                                          
+    97 000000AE 83F801                          cmp EAX, 1
+    98 000000B1 7416                            je print_ip
+    99 000000B3 BB00000000                      mov EBX, 0
+   100 000000B8 0F8570FFFFFF                    jne for_every_character
+   101                                          
+   102 000000BE BB00000000                      mov EBX, 0
+   103 000000C3 51                              push ECX
+   104 000000C4 B900000000                      mov ECX, 0
+   105                                          print_ip:
+   106 000000C9 FF348D[E0070000]                    push dword [complete_ip+ECX*4]
+   107 000000D0 68[00000000]                        push dword format
+   108 000000D5 FF15[00000000]                      call[printf]
+   109 000000DB 41                                  inc ECX
+   110 000000DC 83F904                              cmp ECX, 4
+   111 000000DF 0F8449FFFFFF                        je for_every_character
+   112                                              
+   113 000000E5 6A00                        push dword 0
+   114 000000E7 FF15[00000000]              call [exit]

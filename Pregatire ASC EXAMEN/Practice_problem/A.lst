@@ -1,0 +1,32 @@
+     1                                  bits 32
+     2                                  
+     3                                  global A
+     4                                  
+     5                                  segment data use32 public data
+     6 00000000 00000000                    counter dd 0
+     7                                  segment code use32 public code
+     8                                      A:
+     9                                      ; AB CD EF GH
+    10                                      ; ESP - return address
+    11                                      ; ESP + 4 - address of sir1
+    12                                      ; ESP + 8 - length of sir1
+    13                                      ; ESP + 12 - address of sir2
+    14                                      
+    15 00000000 8B742404                    mov ESI, [ESP + 4]
+    16 00000004 8B4C2408                    mov ECX, [ESP + 8]
+    17 00000008 8B7C240C                    mov EDI, [ESP + 12]
+    18                                      
+    19                                      for_every_doubleword:
+    20 0000000C AC                              lodsb
+    21 0000000D AC                              lodsb
+    22 0000000E 3C00                            cmp AL, 0
+    23 00000010 7D07                            jge next_double_word
+    24 00000012 AA                                  stosb
+    25 00000013 FF05[00000000]                      inc dword[counter]
+    26                                          
+    27                                          next_double_word:
+    28 00000019 66AD                            lodsw
+    29 0000001B E2EF                            loop for_every_doubleword
+    30 0000001D 8B1D[00000000]              mov EBX, [counter]
+    31                                      
+    32 00000023 C3                          ret

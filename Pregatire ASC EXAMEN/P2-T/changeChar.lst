@@ -1,0 +1,50 @@
+     1                                  bits 32
+     2                                  
+     3                                  global changeChar
+     4                                  
+     5                                  segment data use32 class=data
+     6 00000000 00000000                    c dd 0
+     7 00000004 00000000                    op dd 0
+     8 00000008 00000000                    n dd 0
+     9                                  
+    10                                  segment code use32 class=code
+    11                                  
+    12                                  changeChar:
+    13                                  
+    14                                  ; ESP - return address
+    15                                  ; ESP + 4 - index
+    16                                  ; ESP + 8 - operation
+    17                                  ; ESP + 12 - character
+    18                                  
+    19 00000000 8B442404                        mov EAX, [ESP + 4] ; index
+    20 00000004 A3[08000000]                    mov [n], EAX
+    21 00000009 8B442408                        mov EAX, [ESP + 8] ; op
+    22 0000000D A3[04000000]                    mov [op], EAX
+    23 00000012 8B44240C                        mov EAX, [ESP + 12] ; c
+    24 00000016 A3[00000000]                    mov [c], EAX
+    25                                          
+    26 0000001B 833D[04000000]2D                cmp dword[op], '-'
+    27 00000022 740B                            je operation_minus
+    28                                          
+    29 00000024 833D[04000000]2D                cmp dword[op], '-'
+    30 0000002B 7414                            je operation_and
+    31                                          
+    32 0000002D EB22                            jmp final
+    33                                          
+    34                                          operation_minus:
+    35 0000002F A1[08000000]                        mov EAX, [n]
+    36 00000034 2905[00000000]                      sub dword[c], EAX
+    37 0000003A A1[00000000]                        mov EAX, [c]
+    38 0000003F EB10                                jmp final
+    39                                              
+    40                                          operation_and:
+    41 00000041 A1[00000000]                        mov EAX, [c]
+    42 00000046 8B1D[08000000]                      mov EBX, [n]
+    43 0000004C 21D8                                and EAX, EBX
+    44 0000004E 83C061                              add EAX, 'a'
+    45                                              
+    46                                          
+    47                                          
+    48                                          final:
+    49                                          
+    50 00000051 C3                              ret

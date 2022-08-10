@@ -1,0 +1,103 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  ; declare the EntryPoint (a label defining the very first instruction of the program)
+     4                                  global start        
+     5                                  
+     6                                  ; declare external functions needed by our program
+     7                                  extern exit, printf, scanf, gets               ; tell nasm that exit exists even if we won't be defining it
+     8                                  import exit msvcrt.dll    ; exit is a function that ends the calling process. It is defined in msvcrt.dll
+     9                                                            ; msvcrt.dll contains exit, printf and all the other important C-runtime specific functions
+    10                                  import printf msvcrt.dll
+    11                                  import scanf msvcrt.dll
+    12                                  import gets msvcrt.dll
+    13                                  
+    14                                  
+    15                                  ; Read a sentence from the keyboard. For each word, obtain a new one by taking the letters in reverse order and print each new word. 
+    16                                  
+    17                                  
+    18                                  ; our data is declared here (the variables needed by our program)
+    19                                  segment date use32 class=data:
+    20 00000000 5479706520696E2074-         format_string db "Type in the sentence: ", 0
+    20 00000009 68652073656E74656E-
+    20 00000012 63653A2000         
+    21 00000017 25732000                    format db "%s ", 0
+    22 0000001B 00<rept>                    given_sentence times 100 db 0
+    23 0000007F 00<rept>                    new_word times 100 db 0
+    24                                      
+    25                                  segment date use32 class=code:
+    26                                      start:
+    27 000000E3 68[00000000]                push dword format_string
+    28 000000E8 FF15[00000000]              call [printf]
+    29 000000EE 83C404                      add ESP, 4*1
+    30                                      
+    31 000000F1 68[1B000000]                push dword given_sentence
+    32 000000F6 FF15[00000000]              call[gets]
+    33 000000FC 83C404                      add ESP, 4*1
+    34                                      
+    35                                      
+    36 000000FF BE00000000                  mov ESI, 0
+    37 00000104 BF00000000                  mov EDI, 0
+    38                                      
+    39                                      for_every_word:
+    40                                      
+    41                                          find_the_length_of_the_word:
+    42                                          
+    43 00000109 80BF[1B000000]20                    cmp byte[given_sentence + EDI], 20h ; We check if we reached a character which is a white space
+    44 00000110 740C                                je go_further
+    45 00000112 80BF[1B000000]00                    cmp byte[given_sentence + EDI], 0 ; We check if we reached the last word
+    46 00000119 7403                                je go_further
+    47                                              
+    48 0000011B 47                                  inc EDI
+    49 0000011C EBEB                            jmp find_the_length_of_the_word
+    50                                              
+    51                                          go_further:
+    52 0000011E BB00000000                      mov EBX, 0
+    53 00000123 B964000000                      mov ECX, 100
+    54                                          for_every_character:
+    55 00000128 C683[7F000000]00                    mov byte[new_word + EBX], 0
+    56 0000012F 43                                  inc EBX
+    57 00000130 E2F6                            loop for_every_character
+    58                                          
+    59                                          
+    60                                          ; We need to compute the length of the word
+    61 00000132 89FB                            mov EBX, EDI
+    62 00000134 29F3                            sub EBX, ESI ; In EBX we have the length of the word
+    63 00000136 89D9                            mov ECX, EBX
+    64                                          
+    65 00000138 89FB                            mov EBX, EDI ; We need to save the value of EDI
+    66 0000013A 4F                              dec EDI ; We remove the space or the zero character
+    67                                          
+    68 0000013B BA00000000                      mov EDX, 0 ; With the help of EDX we will 
+    69                                          
+    70                                          mirror_the_word:
+    71 00000140 8A87[1B000000]                      mov AL, byte[given_sentence + EDI]
+    72 00000146 8882[7F000000]                      mov byte[new_word + EDX], AL
+    73 0000014C 42                                  inc EDX
+    74 0000014D 4F                                  dec EDI
+    75 0000014E E2F0                                loop mirror_the_word
+    76                                  
+    77 00000150 68[7F000000]                    push dword new_word
+    78 00000155 68[17000000]                    push dword format
+    79 0000015A FF15[00000000]                  call [printf]
+    80 00000160 83C408                          add ESP, 4*2
+    81                                          
+    82 00000163 89DF                            mov EDI, EBX ; We restore the value of EDI
+    83 00000165 80BF[1B000000]00                cmp byte[given_sentence + EDI], 0
+    84 0000016C 7408                            je final
+    85                                          
+    86 0000016E 89FE                            mov ESI, EDI 
+    87 00000170 46                              inc ESI
+    88 00000171 83C701                          add EDI, 1
+    89 00000174 EB93                            jmp for_every_word
+    90                                          
+    91                                          
+    92                                      
+    93                                          
+    94                                      final:
+    95 00000176 6A00                        push dword 0
+    96 00000178 FF15[00000000]              call [exit]
+    97                                  
+    98                                      
+    99                                      
+   100                                      
+   101                                      

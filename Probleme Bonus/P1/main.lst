@@ -1,0 +1,59 @@
+     1                                  bits  32
+     2                                  global  start
+     3                                  
+     4                                  extern exit, fopen, fread, fclose, fscanf
+     5                                  import  printf msvcrt.dll
+     6                                  import scanf msvcrt.dll
+     7                                  import  exit msvcrt.dll
+     8                                  import fopen msvcrt.dll
+     9                                  import fread msvcrt.dll
+    10                                  import fclose msvcrt.dll
+    11                                  import fscanf msvcrt.dll
+    12                                  
+    13                                  
+    14                                  
+    15                                  segment  data use32 public data
+    16                                  
+    17 00000000 7369725F6E756D6572-         file_name db "sir_numere.txt", 0
+    17 00000009 652E74787400       
+    18 0000000F 7200                        access_mode db "r", 0
+    19 00000011 FFFFFFFF                    file_descriptor dd -1
+    20 00000015 00000000                    numberToRead dd 0
+    21 00000019 2564                        number_type db "%d"
+    22 0000001B 00000000                    sum dd 0
+    23                                      
+    24                                  segment  code use32 public code
+    25                                  start:
+    26                                      ; call fopen() to create the file
+    27                                      ; fopen() will return a file descriptor in the EAX or 0 in case of error
+    28                                      ; eax = fopen(file_name, access_mode)
+    29                                      
+    30 00000000 68[0F000000]                push dword access_mode
+    31 00000005 68[00000000]                push dword file_name
+    32 0000000A FF15[00000000]              call [fopen]
+    33 00000010 83C408                      add ESP, 4*2
+    34                                      
+    35 00000013 A3[11000000]                mov [file_descriptor], EAX
+    36                                      
+    37 00000018 83F800                      cmp EAX, 0
+    38 0000001B EB2A                        jmp final
+    39                                      
+    40                                      readNumbers:
+    41 0000001D 68[15000000]                    push dword numberToRead ; read the text from file usinf fscanf()
+    42                                          ;EAX = fscanf(file_descriptor, number_type, number)
+    43 00000022 68[19000000]                    push dword number_type
+    44 00000027 FF35[11000000]                  push dword [file_descriptor]
+    45 0000002D FF15[00000000]                  call [fscanf]
+    46 00000033 83C410                          add ESP, 4*4 ; clean-up the stack
+    47                                          
+    48 00000036 8B1D[15000000]                  mov EBX, [numberToRead];
+    49 0000003C 011D[1B000000]                  add dword[sum], EBX
+    50                                          
+    51 00000042 83F8FF                          cmp EAX, -1
+    52 00000045 75D6                            jne readNumbers
+    53                                          
+    54                                          
+    55                                      
+    56                                      final:
+    57 00000047 6A00                    	push 0
+    58 00000049 FF15[00000000]          	call [exit]

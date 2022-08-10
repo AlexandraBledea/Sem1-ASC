@@ -1,0 +1,46 @@
+     1                                  bits 32
+     2                                  
+     3                                  global start
+     4                                  
+     5                                  extern exit, printf, scanf, fread, fclose, fopen
+     6                                  
+     7                                  import exit msvcrt.dll
+     8                                  import printf msvcrt.dll
+     9                                  import scanf msvcrt.dll
+    10                                  import fread msvcrt.dll
+    11                                  import fclose msvcrt.dll
+    12                                  import fopen msvcrt.dll
+    13                                  
+    14                                  segment data use32 class=data
+    15 00000000 00000000                    number dd 0
+    16 00000004 257800                      format db "%x", 0
+    17                                  
+    18                                  segment code use32 class=code
+    19                                      start:
+    20 00000000 C705[00000000]FF00-             mov dword[number], 11111111b
+    20 00000008 0000               
+    21 0000000A BE[00000000]                    mov esi, number
+    22 0000000F BB00000000                      mov ebx, 0b
+    23                                      .convert:
+    24 00000014 AC                              lodsb
+    25 00000015 3C00                            cmp al, 0
+    26 00000017 7413                            jz .endc
+    27 00000019 2C30                            sub al, 48
+    28 0000001B B400                            mov ah, 0
+    29 0000001D 66BA0000                        mov dx, 0
+    30 00000021 6652                            push dx
+    31 00000023 6650                            push ax
+    32 00000025 58                              pop eax
+    33 00000026 01C3                            add ebx, eax
+    34 00000028 D1C3                            rol ebx, 1
+    35 0000002A EBE8                       jmp .convert
+    36                                     .endc:
+    37 0000002C D1CB                            ror ebx, 1
+    38 0000002E 89D8                            mov eax, ebx
+    39                                          
+    40 00000030 50                          push dword EAX
+    41 00000031 68[04000000]                push dword format
+    42 00000036 FF15[00000000]              call [printf]
+    43                                          
+    44 0000003C 6A00                        push dword 0
+    45 0000003E FF15[00000000]              call [exit]

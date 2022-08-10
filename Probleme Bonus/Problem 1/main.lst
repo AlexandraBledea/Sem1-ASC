@@ -1,0 +1,83 @@
+     1                                  bits  32
+     2                                  global  start
+     3                                  
+     4                                  extern exit, fopen, fclose, fscanf
+     5                                  
+     6                                  import  exit msvcrt.dll
+     7                                  import fopen msvcrt.dll
+     8                                  import fclose msvcrt.dll
+     9                                  import fscanf msvcrt.dll
+    10                                  
+    11                                  
+    12                                  
+    13                                  segment  data use32 public data
+    14                                  
+    15 00000000 696E7075742E747874-         file_name db "input.txt", 0
+    15 00000009 00                 
+    16 0000000A 7200                        access_mode db "r", 0
+    17 0000000C FFFFFFFF                    file_descriptor dd -1
+    18 00000010 00000000                    numberToRead dd 0
+    19 00000014 2564                        number_type db "%d"
+    20 00000016 00000000                    sum dd 0
+    21                                      
+    22                                  segment  code use32 public code
+    23                                      start:
+    24                                          ; call fopen() to create the file
+    25                                          ; fopen() will return a file descriptor in the EAX or 0 in case of error
+    26                                          ; eax = fopen(file_name, access_mode)
+    27                                          
+    28 00000000 68[0A000000]                    push dword access_mode
+    29 00000005 68[00000000]                    push dword file_name
+    30 0000000A FF15[00000000]                  call [fopen]
+    31 00000010 83C408                          add ESP, 4*2
+    32                                          
+    33 00000013 A3[0C000000]                    mov dword[file_descriptor], EAX
+    34                                          
+    35 00000018 83F800                          cmp EAX, 0
+    36 0000001B 747C                            je final
+    37                                          
+    38                                          readNumbers:
+    39 0000001D 68[10000000]                        push dword numberToRead ; read the text from file usinf fscanf()
+    40                                              ;EAX = fscanf(file_descriptor, number_type, number)
+    41 00000022 68[14000000]                        push dword number_type
+    42 00000027 FF35[0C000000]                      push dword [file_descriptor]
+    43 0000002D FF15[00000000]                      call [fscanf]
+    44 00000033 83C410                              add ESP, 4*4 ; clean-up the stack
+    45                                              
+    46 00000036 8B1D[10000000]                      mov EBX, [numberToRead];
+    47 0000003C 011D[16000000]                      add dword[sum], EBX
+    48 00000042 83FB80                              cmp EBX, -128
+    49 00000045 7C10                                jnge label1
+    50 00000047 83FB7F                                  cmp EBX, 127
+    51 0000004A 7F0B                                    jnle label1
+    52 0000004C F62D[10000000]                              imul byte[numberToRead]
+    53 00000052 83F8FF                                      cmp EAX, -1 
+    54 00000055 75C6                                        jne readNumbers
+    55                                                  
+    56                                                  label1:
+    57 00000057 81FB0080FFFF                                cmp EBX, -32768
+    58 0000005D 7C14                                        jnge label2
+    59 0000005F 81FBFF7F0000                                    cmp EBX, 32767
+    60 00000065 7F0C                                            jnle label2
+    61 00000067 66F72D[10000000]                                    imul word[numberToRead]
+    62 0000006E 83F8FF                                              cmp EAX, -1 
+    63 00000071 75AA                                                jne readNumbers
+    64                                                          
+    65                                                          label2:
+    66 00000073 81FB00000080                                        cmp EBX, -2147483648
+    67 00000079 7C13                                                jnge label3
+    68 0000007B 81FBFFFFFF7F                                            cmp EBX, 2147483647
+    69 00000081 7F0B                                                    jnle label3
+    70 00000083 F72D[10000000]                                              imul dword[numberToRead]
+    71 00000089 83F8FF                                                      cmp EAX, -1 
+    72 0000008C 758F                                                        jne readNumbers
+    73                                                                      label3:
+    74 0000008E 83F8FF                                                          cmp EAX, -1 
+    75 00000091 758A                                                            jne readNumbers
+    76                                          
+    77 00000093 291D[16000000]                  sub dword[sum], EBX
+    78                                              
+    79                                          
+    80                                          final:
+    81 00000099 6A00                            push 0
+    82 0000009B FF15[00000000]                  call [exit]

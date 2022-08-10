@@ -1,0 +1,121 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  global start
+     4                                  
+     5                                  extern exit, fopen, fread, fclose, scanf, fprintf, printf            
+     6                                  import exit msvcrt.dll    
+     7                                                            
+     8                                  import fread msvcrt.dll
+     9                                  import fclose msvcrt.dll
+    10                                  import scanf msvcrt.dll
+    11                                  import fprintf msvcrt.dll
+    12                                  import fopen msvcrt.dll
+    13                                  import printf msvcrt.dll
+    14                                  
+    15                                  ;Se citeste un text din fisier si un character de la tastatura.
+    16                                  ;a)	Calculati numarul de aparitii al caracterului citit in textul dat si inlocuiti-l cu X, scriind reszultatul in alt fisier output.txt
+    17                                  
+    18                                  segment  data use32 public data
+    19                                  
+    20 00000000 <res 00000004>              counter resd 1
+    21 00000004 696E7075742E747874-         file_name db "input.txt", 0
+    21 0000000D 00                 
+    22 0000000E 726573756C742E7478-         file_name2 db "result.txt", 0
+    22 00000017 7400               
+    23 00000019 612B00                      access_mode2 db "a+", 0
+    24 0000001C 7200                        access_mode db "r", 0    
+    25 0000001E 256300                      format_read db "%c", 0
+    26 00000021 FFFFFFFF                    file_descriptor dd -1
+    27 00000025 FFFFFFFF                    file_descriptor2 dd -1
+    28                                      len equ 100
+    29                                      len2 equ 100000
+    30 00000029 <res 00000004>              actual_length resd 1
+    31 0000002D 00<rept>                    result times len2 db 0
+    32 000186CD 00<rept>                    input_text times len db 0
+    33 00018731 00                          character db 0
+    34                                      
+    35                                  segment  code use32 public code   
+    36                                      start:
+    37                                          ;scanf(format_read, character)
+    38 00000000 68[31870100]                    push dword character
+    39 00000005 68[1E000000]                    push dword format_read
+    40 0000000A FF15[00000000]                  call [scanf]
+    41 00000010 83C408                          add ESP, 4*2
+    42                                      
+    43                                          ;fopen(file_name2, access_mode2)
+    44 00000013 68[19000000]                    push dword access_mode2
+    45 00000018 68[0E000000]                    push dword file_name2
+    46 0000001D FF15[00000000]                  call [fopen]
+    47 00000023 83C408                          add ESP, 4*2
+    48                                          
+    49 00000026 83F800                          cmp EAX, 0
+    50 00000029 0F84A2000000                    je cleanup
+    51                                          
+    52 0000002F A3[25000000]                    mov [file_descriptor2], EAX
+    53                                          
+    54                                          ;fopen(file_name, access_mode)
+    55 00000034 68[1C000000]                    push dword access_mode
+    56 00000039 68[04000000]                    push dword file_name
+    57 0000003E FF15[00000000]                  call [fopen]
+    58 00000044 83C408                          add ESP, 4*2
+    59                                          
+    60 00000047 83F800                          cmp EAX, 0
+    61 0000004A 0F8481000000                    je cleanup
+    62                                          
+    63 00000050 A3[21000000]                    mov [file_descriptor], EAX
+    64                                          
+    65                                          repeat:
+    66                                              ;fread(input_text, 1, len, file_descriptor)
+    67 00000055 FF35[21000000]                      push dword [file_descriptor]
+    68 0000005B 6A64                                push dword len
+    69 0000005D 6A01                                push dword 1
+    70 0000005F 68[CD860100]                        push dword input_text
+    71 00000064 FF15[00000000]                      call [fread]
+    72 0000006A 83C410                              add ESP, 4*4
+    73                                              
+    74 0000006D 83F800                              cmp EAX, 0
+    75 00000070 742D                                je end_of_read
+    76 00000072 A3[29000000]                        mov dword[actual_length], EAX
+    77                                  
+    78 00000077 8B0D[29000000]                      mov ECX, dword[actual_length]
+    79 0000007D BE[CD860100]                        mov ESI, input_text
+    80 00000082 BF[2D000000]                        mov EDI, result
+    81 00000087 FC                                  cld
+    82                                              
+    83                                              for_every_read_character:
+    84 00000088 AC                                      lodsb
+    85                                                  ;we check if the character read is found in the text
+    86 00000089 3A05[31870100]                          cmp AL, [character]
+    87 0000008F 7509                                    jne label1
+    88 00000091 8305[00000000]01                            add dword[counter], 1
+    89 00000098 B058                                        mov AL, 'X'
+    90                                                  
+    91                                                  label1:
+    92 0000009A AA                                      stosb
+    93 0000009B E2EB                                    loop for_every_read_character  
+    94                                              
+    95 0000009D EBB6                            jmp repeat
+    96                                          
+    97                                          end_of_read:
+    98                                          
+    99                                          ;append the new text to another file
+   100                                          ;fprintf(file_descriptor2, result)
+   101 0000009F 68[2D000000]                    push dword result
+   102 000000A4 FF35[25000000]                  push dword [file_descriptor2]
+   103 000000AA FF15[00000000]                  call [fprintf]
+   104 000000B0 83C408                          add ESP, 4*2
+   105                                          
+   106                                          ;fclose(file_descriptor)
+   107 000000B3 FF35[21000000]                  push dword [file_descriptor]
+   108 000000B9 FF15[00000000]                  call [fclose]
+   109 000000BF 83C404                          add ESP, 4*1
+   110                                          
+   111                                          ;fclose(file_descriptor2)
+   112 000000C2 FF35[25000000]                  push dword [file_descriptor2]
+   113 000000C8 FF15[00000000]                  call [fclose]
+   114 000000CE 83C404                          add ESP, 4*1
+   115                                          
+   116                                          cleanup:
+   117 000000D1 6A00                            push    dword 0
+   118 000000D3 FF15[00000000]                  call    [exit]
+   119                                          

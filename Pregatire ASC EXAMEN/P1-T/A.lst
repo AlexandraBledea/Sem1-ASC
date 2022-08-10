@@ -1,0 +1,54 @@
+     1                                  bits 32
+     2                                  
+     3                                  global A
+     4                                  extern printf
+     5                                  import printf msvcrt.dll
+     6                                  
+     7                                  
+     8                                  segment data use32  class=data
+     9                                      
+    10 00000000 00000000                    counter dd 0
+    11 00000004 00000000                    copy_of_digit dd 0
+    12 00000008 00000000                    integer_form dd 0
+    13 0000000C 00000000                    copy_of_counter dd 0
+    14 00000010 256400                      format db "%d", 0
+    15                                  segment code use32 public code
+    16                                  
+    17                                  A:
+    18                                  
+    19                                  ; ESP - return address
+    20                                  ; ESP + 4 - [counter]
+    21                                  ; ESP + 8 - ip_string
+    22 00000000 C705[08000000]0000-         mov dword[integer_form], 0
+    22 00000008 0000               
+    23 0000000A 8B4C2404                    mov ECX, [ESP + 4] ; the number of characters
+    24 0000000E 890D[00000000]              mov [counter], ECX
+    25                                      
+    26 00000014 8B742408                    mov ESI, [ESP + 8]
+    27 00000018 01CE                        add ESI, ECX
+    28 0000001A 83EE01                      sub ESI, 1
+    29 0000001D 83F901                      cmp ECX, 1
+    30 00000020 7403                        je go_further
+    31 00000022 750C                        jne for_every_character
+    32 00000024 FD                          std
+    33                                      go_further:
+    34 00000025 AC                              lodsb
+    35 00000026 2C30                            sub AL, '0'
+    36 00000028 0005[08000000]                  add [integer_form], AL
+    37 0000002E EB1C                            jmp end_
+    38                                      
+    39                                      for_every_character:
+    40 00000030 AC                                  lodsb
+    41 00000031 2C30                                sub AL, '0'
+    42 00000033 A2[04000000]                        mov [copy_of_digit], AL
+    43 00000038 A1[04000000]                        mov EAX, [copy_of_digit]
+    44 0000003D BB0A000000                          mov EBX, 10
+    45 00000042 F7E3                                mul EBX
+    46 00000044 0105[08000000]                      add dword[integer_form], EAX
+    47 0000004A E2E4                                loop for_every_character
+    48                                      
+    49                                      end_:        
+    50 0000004C A1[08000000]                mov EAX, [integer_form]
+    51 00000051 C3                          ret
+    52                                              
+    53                                              

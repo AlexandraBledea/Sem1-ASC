@@ -1,0 +1,104 @@
+     1                                  bits 32
+     2                                  
+     3                                  global start
+     4                                  
+     5                                  extern exit, printf, scanf, fread, fopen
+     6                                  import exit msvcrt.dll
+     7                                  import printf msvcrt.dll
+     8                                  import scanf msvcrt.dll
+     9                                  import gets msvcrt.dll
+    10                                  import fread msvcrt.dll
+    11                                  import fopen msvcrt.dll
+    12                                  
+    13                                  
+    14                                  segment data use32 class=data
+    15 00000000 FF                          file_descriptor db -1
+    16 00000001 696E7075742E747874-         file_name db "input.txt", 0
+    16 0000000A 00                 
+    17 0000000B 7200                        access_mode db "r", 0
+    18 0000000D 546865206E756D6265-         format db "The number of consonants is: %d", 0
+    18 00000016 72206F6620636F6E73-
+    18 0000001F 6F6E616E7473206973-
+    18 00000028 3A20256400         
+    19 0000002D 00<rept>                    input_text times 100 db 0
+    20                                      len equ 100
+    21 00000091 00000000                    counter dd 0
+    22                                      
+    23                                  segment code use32 class=code
+    24                                      start:
+    25                                          ;fopen(file_name, access_mode)
+    26 00000000 68[0B000000]                    push access_mode
+    27 00000005 68[01000000]                    push file_name
+    28 0000000A FF15[00000000]                  call [fopen]
+    29 00000010 83C408                          add ESP, 4*2
+    30                                          
+    31 00000013 83F800                          cmp EAX, 0
+    32 00000016 747F                            je final
+    33 00000018 A3[00000000]                    mov [file_descriptor], EAX
+    34                                          
+    35                                          repeat_reading:
+    36                                              ;fread(input_text, 1, len, file_descriptor)
+    37 0000001D FF35[00000000]                      push dword [file_descriptor]
+    38 00000023 6A64                                push dword len
+    39 00000025 6A01                                push dword 1
+    40 00000027 68[2D000000]                        push input_text
+    41 0000002C FF15[00000000]                      call [fread]
+    42                                              
+    43 00000032 83F800                              cmp EAX, 0
+    44 00000035 744C                                je end_of_reading
+    45                                              
+    46 00000037 BE[2D000000]                        mov ESI, input_text
+    47 0000003C 89C1                                mov ECX, EAX
+    48                                              for_every_character:
+    49 0000003E AC                                      lodsb
+    50 0000003F 3C61                                    cmp AL, 'a'
+    51 00000041 743C                                    je not_consonant
+    52 00000043 3C41                                    cmp AL, 'A'
+    53 00000045 7438                                    je not_consonant
+    54 00000047 3C65                                    cmp AL, 'e'
+    55 00000049 7434                                    je not_consonant
+    56 0000004B 3C45                                    cmp AL, 'E'
+    57 0000004D 7430                                    je not_consonant
+    58 0000004F 3C69                                    cmp AL, 'i'
+    59 00000051 742C                                    je not_consonant
+    60 00000053 3C49                                    cmp AL, 'I'
+    61 00000055 7428                                    je not_consonant
+    62 00000057 3C6F                                    cmp AL, 'o'
+    63 00000059 7424                                    je not_consonant
+    64 0000005B 3C4F                                    cmp AL, 'O'
+    65 0000005D 7420                                    je not_consonant
+    66 0000005F 3C75                                    cmp AL, 'u'
+    67 00000061 741C                                    je not_consonant
+    68 00000063 3C55                                    cmp AL, 'U'
+    69 00000065 7418                                    je not_consonant
+    70 00000067 3C40                                    cmp AL, 40h
+    71 00000069 7614                                    jbe not_consonant
+    72 0000006B 3C7B                                    cmp AL, 7Bh
+    73 0000006D 7D10                                    jge not_consonant
+    74 0000006F 3C5B                                    cmp AL, 5Bh
+    75 00000071 7D00                                    jge go_further
+    76                                                  go_further:
+    77 00000073 3C60                                    cmp AL, 60h
+    78 00000075 7608                                    jbe not_consonant
+    79 00000077 7200                                    jb consonant_found
+    80                                                  
+    81                                                  
+    82                                                  consonant_found:
+    83 00000079 FF05[91000000]                          inc dword[counter]
+    84                                                  
+    85                                              not_consonant:
+    86 0000007F E2BD                                loop for_every_character
+    87                                              
+    88 00000081 EB9A                           jmp repeat_reading
+    89                                         
+    90                                      end_of_reading:    
+    91                                      
+    92                                      ;printf(format, counter)
+    93 00000083 FF35[91000000]              push dword [counter]
+    94 00000089 68[0D000000]                push dword format
+    95 0000008E FF15[00000000]              call [printf]
+    96 00000094 83C408                      add ESP, 4*2
+    97                                      
+    98                                      final:
+    99 00000097 6A00                        push dword 0
+   100 00000099 FF15[00000000]              call [exit]

@@ -1,0 +1,88 @@
+     1                                  bits  32
+     2                                  global  start
+     3                                  
+     4                                  extern exit, fopen, fclose, fscanf
+     5                                  
+     6                                  import  exit msvcrt.dll
+     7                                  import fopen msvcrt.dll
+     8                                  import fclose msvcrt.dll
+     9                                  import fscanf msvcrt.dll
+    10                                  
+    11                                  
+    12                                  
+    13                                  segment  data use32 public data
+    14                                  
+    15 00000000 696E7075742E747874-         file_name db "input.txt", 0
+    15 00000009 00                 
+    16 0000000A 7200                        access_mode db "r", 0
+    17 0000000C FFFFFFFF                    file_descriptor dd -1
+    18 00000010 00000000                    numberToRead dd 0
+    19 00000014 2564                        number_type db "%d"
+    20 00000016 00<rept>                    numbers times 100 db 0
+    21 0000007A 00000000                    counter dd 0
+    22                                      
+    23                                  segment  code use32 public code
+    24                                      start:
+    25                                          ; call fopen() to create the file
+    26                                          ; fopen() will return a file descriptor in the EAX or 0 in case of error
+    27                                          ; eax = fopen(file_name, access_mode)
+    28                                          
+    29 00000000 68[0A000000]                    push dword access_mode
+    30 00000005 68[00000000]                    push dword file_name
+    31 0000000A FF15[00000000]                  call [fopen]
+    32 00000010 83C408                          add ESP, 4*2
+    33                                          
+    34 00000013 A3[0C000000]                    mov dword[file_descriptor], EAX
+    35                                          
+    36 00000018 83F800                          cmp EAX, 0
+    37 0000001B 7470                            je final
+    38                                          
+    39                                          readNumbers:
+    40                                              ;EAX = fscanf(file_descriptor, number_type, number)
+    41 0000001D 68[10000000]                        push dword numberToRead ; read the text from file usinf fscanf()
+    42 00000022 68[14000000]                        push dword number_type
+    43 00000027 FF35[0C000000]                      push dword [file_descriptor]
+    44 0000002D FF15[00000000]                      call [fscanf]
+    45 00000033 83C410                              add ESP, 4*4 ; clean-up the stack
+    46                                              
+    47 00000036 83F8FF                              cmp EAX, -1
+    48 00000039 75E2                                jne readNumbers
+    49                                              
+    50 0000003B 8305[7A000000]01                    add dword[counter], 1
+    51 00000042 BB[10000000]                        mov EBX, numberToRead
+    52 00000047 891D[16000000]                      mov [numbers], EBX
+    53                                              
+    54 0000004D 832D[7A000000]01                sub dword[counter], 1
+    55                                          
+    56 00000054 B301                            Mov bl,1  ; OK  
+    57                                          while : 
+    58 00000056 B300                            Mov bl, 0  
+    59 00000058 8B0D[7A000000]                  Mov ecx, dword[counter]
+    60 0000005E BE[16000000]                    Mov esi, numbers  
+    61 00000063 FC                              CLD  
+    62                                          repeta3 : 
+    63 00000064 AC                                 Lodsb ; 
+    64 00000065 3A06                               Cmp AL, [ESI]  
+    65 00000067 7E0E                               JLE here 
+    66 00000069 8A16                                  mov DL, [ESI]  
+    67 0000006B 83EE01                                sub ESI, 1
+    68 0000006E 8816                                  mov [ESI], DL 
+    69 00000070 83C601                                add ESI, 1
+    70 00000073 8806                                  mov [ESI], AL 
+    71 00000075 B301                                  mov BL, 1 
+    72                                          here :  
+    73 00000077 E2EB                            Loop repeta3 
+    74 00000079 80FB01                          Cmp BL , 1 
+    75 0000007C 74D8                            JE while 
+    76                                  
+    77                                          ;fclose(file_descriptor)
+    78 0000007E FF35[0C000000]                  push dword[file_descriptor]
+    79 00000084 FF15[00000000]                  call [fclose]
+    80 0000008A 83C404                          add ESP, 4*1
+    81                                          
+    82                                          final:
+    83                                          
+    84 0000008D 6A00                            push    dword 0
+    85 0000008F FF15[00000000]                  call    [exit]
+    86                                              
+    87                                              

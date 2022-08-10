@@ -1,0 +1,63 @@
+     1                                  bits 32
+     2                                  
+     3                                  global start
+     4                                  
+     5                                  extern exit, printf, scanf, fread, fclose, fopen
+     6                                  
+     7                                  import exit msvcrt.dll
+     8                                  import printf msvcrt.dll
+     9                                  import scanf msvcrt.dll
+    10                                  import fread msvcrt.dll
+    11                                  import fclose msvcrt.dll
+    12                                  import fopen msvcrt.dll
+    13                                  ;Sa se citeasca de la tastatura un numar in baza 10 si un numar in baza 16. Sa se afiseze
+    14                                  ;in baza 10 numarul de biti 1 ai sumei celor doua numere citite. Exemplu:
+    15                                  ;a = 32 = 0010 0000b
+    16                                  ;b = 1Ah = 0001 1010b
+    17                                  ;32 + 1Ah = 0011 1010b
+    18                                  ;Se va afisa pe ecran valoarea 4.
+    19                                  
+    20                                  segment data use32 class=data
+    21 00000000 256400                      format1 db "%d", 0
+    22 00000003 257800                      format2 db "%x", 0
+    23 00000006 00000000                    number1 dd 0
+    24 0000000A 00000000                    number2 dd 0
+    25 0000000E 00000000                    sum_of_numbers dd 0
+    26 00000012 00000000                    sum dd 0
+    27                                      
+    28                                  segment code use32 class=code
+    29                                      start:
+    30                                      
+    31                                      ;scanf(format1, number)
+    32 00000000 68[06000000]                push dword number1
+    33 00000005 68[00000000]                push dword format1
+    34 0000000A FF15[00000000]              call [scanf]
+    35                                      
+    36                                      ;scanf(format2, number2)
+    37 00000010 68[0A000000]                push dword number2
+    38 00000015 68[03000000]                push dword format2
+    39 0000001A FF15[00000000]              call [scanf]
+    40                                      
+    41 00000020 B800000000                  mov EAX, 0
+    42 00000025 A1[06000000]                mov EAX, [number1]
+    43 0000002A 0305[0A000000]              add EAX, [number2]
+    44 00000030 A3[0E000000]                mov dword[sum_of_numbers], EAX
+    45                                      
+    46 00000035 B920000000                  mov ECX, 32
+    47 0000003A BA00000000                  mov EDX, 0
+    48                                      for_every_bit:
+    49 0000003F D1E0                            shl EAX, 1
+    50 00000041 7301                            jnc go_further
+    51 00000043 42                              inc EDX
+    52                                          go_further:
+    53 00000044 E2F9                            loop for_every_bit
+    54                                      
+    55 00000046 8915[12000000]              mov dword [sum], EDX
+    56                                      
+    57 0000004C FF35[12000000]              push dword [sum]
+    58 00000052 68[00000000]                push dword format1
+    59 00000057 FF15[00000000]              call[printf]
+    60 0000005D 83C408                      add ESP, 4*2
+    61                                      
+    62 00000060 6A00                        push dword 0
+    63 00000062 FF15[00000000]              call [exit]

@@ -1,0 +1,199 @@
+     1                                  bits 32 ; assembling for the 32 bits architecture
+     2                                  
+     3                                  global start
+     4                                  
+     5                                  extern exit, fopen, fread, fclose, scanf, fprintf, printf               
+     6                                  import exit msvcrt.dll    
+     7                                                            
+     8                                  import fread msvcrt.dll
+     9                                  import fclose msvcrt.dll
+    10                                  import scanf msvcrt.dll
+    11                                  import fprintf msvcrt.dll
+    12                                  import fopen msvcrt.dll
+    13                                  import printf msvcrt.dll
+    14                                  
+    15                                  extern A ; subpoint a)
+    16                                  extern C ; subpoint c)
+    17                                  extern D ; subpoint d)
+    18                                  extern E ; subpoint e)
+    19                                  
+    20                                  ;Se citeste un text din fisier si un character de la tastatura.
+    21                                  ; a)	Calculati numarul de aparitii al caracterului citit in textul dat si inlocuiti-l cu X, scriind reszultatul in alt fisier output.txt
+    22                                  ; c)	Codificati textul folosind corespondenta ABCDâŚ WXYZ -> CDEFâŚ  YZAB si afisati condificarea intr-un nou fisier.
+    23                                  ; d)    Calculati lungimea fisierului.
+    24                                  ; e)      Calculati numarul de cuvinte din fisier.
+    25                                  
+    26                                  segment data use32 class=data
+    27 00000000 00000000                    counter dd 0
+    28 00000004 00000000                    counter_words dd 0
+    29 00000008 696E7075742E747874-         file_name db "input.txt", 0
+    29 00000011 00                 
+    30 00000012 726573756C742E7478-         file_name2 db "result.txt", 0
+    30 0000001B 7400               
+    31 0000001D 66696E616C2E747874-         file_name3 db "final.txt", 0
+    31 00000026 00                 
+    32 00000027 612B00                      access_mode2 db "a+", 0
+    33 0000002A 7200                        access_mode db "r", 0    
+    34 0000002C 612B00                      access_mode3 db "a+", 0
+    35 0000002F 256300                      format_read db "%c", 0
+    36 00000032 FFFFFFFF                    file_descriptor dd -1
+    37 00000036 FFFFFFFF                    file_descriptor2 dd -1
+    38 0000003A FFFFFFFF                    file_descriptor3 dd -1
+    39                                      len equ 100
+    40                                      len2 equ 100000
+    41                                      len3 equ 100000
+    42 0000003E <res 00000004>              actual_length resd 1
+    43 00000042 00<rept>                    result times len2 db 0
+    44 000186E2 00<rept>                    input_text times len db 0
+    45 00018746 00<rept>                    final times len3 db 0
+    46 00030DE6 00                          character db 0
+    47 00030DE7 546865206368617261-         format_print db "The character %c appeared %u times", 10, 13, 0
+    47 00030DF0 637465722025632061-
+    47 00030DF9 707065617265642025-
+    47 00030E02 752074696D65730A0D-
+    47 00030E0B 00                 
+    48 00030E0C 546865206C656E6774-         format_print2 db "The length of the file is %u", 10, 13, 0
+    48 00030E15 68206F662074686520-
+    48 00030E1E 66696C652069732025-
+    48 00030E27 750A0D00           
+    49 00030E2B 546865206E756D6265-         format_print3 db "The number of words is %u", 0
+    49 00030E34 72206F6620776F7264-
+    49 00030E3D 7320697320257500   
+    50 00030E45 <res 00000004>              total_length resd 1
+    51                                      
+    52                                  segment code use32 class=code    
+    53                                      start:
+    54                                          ;scanf(format_read, character)
+    55 00000000 68[E60D0300]                    push dword character
+    56 00000005 68[2F000000]                    push dword format_read
+    57 0000000A FF15[00000000]                  call [scanf]
+    58 00000010 83C408                          add ESP, 4*2
+    59                                      
+    60                                          ;fopen(file_descriptor3, access_mode3)
+    61 00000013 68[2C000000]                    push dword access_mode3
+    62 00000018 68[1D000000]                    push dword file_name3
+    63 0000001D FF15[00000000]                  call[fopen]
+    64 00000023 83C408                          add ESP, 4*2
+    65                                          
+    66 00000026 83F800                          cmp EAX, 0
+    67 00000029 0F845F010000                    je cleanup
+    68                                          
+    69 0000002F A3[3A000000]                    mov [file_descriptor3], EAX
+    70                                      
+    71                                          ;fopen(file_name2, access_mode2)
+    72 00000034 68[27000000]                    push dword access_mode2
+    73 00000039 68[12000000]                    push dword file_name2
+    74 0000003E FF15[00000000]                  call [fopen]
+    75 00000044 83C408                          add ESP, 4*2
+    76                                          
+    77 00000047 83F800                          cmp EAX, 0
+    78 0000004A 0F843E010000                    je cleanup
+    79                                          
+    80 00000050 A3[36000000]                    mov [file_descriptor2], EAX
+    81                                          
+    82                                          ;fopen(file_name, access_mode)
+    83 00000055 68[2A000000]                    push dword access_mode
+    84 0000005A 68[08000000]                    push dword file_name
+    85 0000005F FF15[00000000]                  call [fopen]
+    86 00000065 83C408                          add ESP, 4*2
+    87                                          
+    88 00000068 83F800                          cmp EAX, 0
+    89 0000006B 0F841D010000                    je cleanup
+    90                                          
+    91 00000071 A3[32000000]                    mov [file_descriptor], EAX
+    92                                          
+    93                                          repeat:
+    94                                              ;fread(input_text, 1, len, file_descriptor)
+    95                                              
+    96 00000076 FF35[32000000]                      push dword [file_descriptor]
+    97 0000007C 6A64                                push dword len
+    98 0000007E 6A01                                push dword 1
+    99 00000080 68[E2860100]                        push dword input_text
+   100 00000085 FF15[00000000]                      call [fread]
+   101 0000008B 83C410                              add ESP, 4*4
+   102                                              
+   103 0000008E 83F800                              cmp EAX, 0
+   104 00000091 7473                                je end_of_read
+   105                                              
+   106 00000093 A3[3E000000]                        mov dword[actual_length], EAX
+   107                                              
+   108 00000098 FF35[3E000000]                      push dword[actual_length]
+   109 0000009E 68[E2860100]                        push dword input_text
+   110 000000A3 68[42000000]                        push dword result
+   111 000000A8 FF35[E60D0300]                      push dword[character]
+   112 000000AE E8(00000000)                        call A
+   113 000000B3 83C410                              add ESP, 4*4
+   114                                              
+   115 000000B6 011D[00000000]                      add dword[counter], EBX
+   116                                              
+   117 000000BC 68[46870100]                        push dword final
+   118 000000C1 68[E2860100]                        push dword input_text
+   119 000000C6 FF35[3E000000]                      push dword [actual_length]
+   120 000000CC E8(00000000)                        call C
+   121 000000D1 83C40C                              add ESP, 4*3
+   122                                              
+   123 000000D4 FF35[3E000000]                      push dword[actual_length]
+   124 000000DA E8(00000000)                        call D
+   125 000000DF 83C404                              add ESP, 4*1
+   126                                              
+   127 000000E2 011D[450E0300]                      add dword[total_length], EBX
+   128                                              
+   129 000000E8 68[E2860100]                        push dword input_text
+   130 000000ED FF35[3E000000]                      push dword[actual_length]
+   131 000000F3 E8(00000000)                        call E
+   132 000000F8 83C408                              add ESP, 4*2
+   133                                              
+   134 000000FB 011D[04000000]                      add dword[counter_words], EBX
+   135                                              
+   136                                              
+   137 00000101 E970FFFFFF                      jmp repeat
+   138                                          
+   139                                          end_of_read:
+   140                                          
+   141                                          ;append the new text to another file
+   142                                          ;fprintf(file_descriptor2, result)
+   143 00000106 68[42000000]                    push dword result
+   144 0000010B FF35[36000000]                  push dword [file_descriptor2]
+   145 00000111 FF15[00000000]                  call [fprintf]
+   146 00000117 83C408                          add ESP, 4*2
+   147                                          
+   148                                          ;append the new text to another file
+   149                                          ;fprintf(file_descriptor3, final)
+   150 0000011A 68[46870100]                    push dword final
+   151 0000011F FF35[3A000000]                  push dword[file_descriptor3]
+   152 00000125 FF15[00000000]                  call [fprintf]
+   153 0000012B 83C408                          add ESP, 4*2
+   154                                          
+   155                                          ;printf(format_print, character, counter)
+   156 0000012E FF35[00000000]                  push dword[counter]
+   157 00000134 FF35[E60D0300]                  push dword[character]
+   158 0000013A 68[E70D0300]                    push dword format_print
+   159 0000013F FF15[00000000]                  call [printf]
+   160 00000145 83C40C                          add ESP, 4*3
+   161                                          
+   162                                          ;printf(format_print2, total_length)
+   163 00000148 FF35[450E0300]                  push dword[total_length]
+   164 0000014E 68[0C0E0300]                    push dword format_print2
+   165 00000153 FF15[00000000]                  call [printf]
+   166 00000159 83C408                          add ESP, 4*2
+   167                                          
+   168                                          ;printf(format_print3, counter_words)
+   169 0000015C FF35[04000000]                  push dword[counter_words]
+   170 00000162 68[2B0E0300]                    push dword format_print3
+   171 00000167 FF15[00000000]                  call [printf]
+   172 0000016D 83C408                          add ESP, 4*2
+   173                                          
+   174                                          ;fclose(file_descriptor)
+   175 00000170 FF35[32000000]                  push dword [file_descriptor]
+   176 00000176 FF15[00000000]                  call [fclose]
+   177 0000017C 83C404                          add ESP, 4*1
+   178                                          
+   179                                          ;fclose(file_descriptor2)
+   180 0000017F FF35[36000000]                  push dword [file_descriptor2]
+   181 00000185 FF15[00000000]                  call [fclose]
+   182 0000018B 83C404                          add ESP, 4*1
+   183                                          
+   184                                          cleanup:
+   185 0000018E 6A00                            push    dword 0
+   186 00000190 FF15[00000000]                  call    [exit]
+   187                                          
